@@ -4,6 +4,16 @@ init-dirs:
 	cat required_dirs.txt | xargs mkdir -p
 
 
+rc-local-up:
+	docker compose up -d
+
+rc-local-down:
+	docker compose down
+
+rclogs:
+	# display Docker logs for RocketChat procs
+
+
 verify-mongodb:
 	export MONGO_DB_NAME=`docker ps -a | grep mongo | awk '{ print $11 }'`
 	echo $$MONGO_DB_NAME
