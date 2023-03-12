@@ -3,6 +3,10 @@
 init-dirs:
 	cat required_dirs.txt | xargs mkdir -p
 
+clean:
+	rm -f tempdata/*
+	rm -f temp_scripts/*
+
 
 rc-local-up:
 	docker compose up -d
@@ -47,12 +51,14 @@ rc-backup:
 	#_______________________________________________________________________
 	#
 
-	$(eval DUMPFILE_NAME=$(shell warp --py --template=rocketlab_templates.backup_filename --macros=rocketlab_macros --params=timestamp:~macro[current_timestamp]))
+	warp --py --template=rocketlab_templates.backup_filename \
+	--macros=rocketlab_macros --params=timestamp:~macro[current_timestamp] > tempdata/latest_dumpfile_name.txt
 	
-	$(eval DBNAME=$(shell cat tempdata/docker_db_volume.txt))
+	tuplegen --delimiter % --listfiles=tempdata/latest_dumpfile_name.txt,tempdata/docker_db_volume.txt \
+	| tuple2json --delimiter % --keys=dumpfile,dbname > tempdata/dump_params.json
 
-	warp --py --template-file=template_files/dump_script.tpl \
-	--params=dumpfile:tempdata/$(DUMPFILE_NAME),dbname:$(DBNAME) >> temp_scripts/rc-dump.sh
+	cat tempdata/dump_params.json | warp --py --template-file=template_files/dump_script.tpl -s \
+	>> temp_scripts/rc-dump.sh
 
 	chmod u+x temp_scripts/rc-dump.sh
 	temp_scripts/rc-dump.sh
@@ -88,7 +94,7 @@ rc-restore: init-dirs
 	#
 
 	rm -f tempdata/selected_mongodump_filename.txt
-	scripts/prompt_for_restore_file.py -o tempdata/selected_mongodump_filename.txt -w tempdata
+	scripts/prompt_for_restore_file.py -o tempdata/selected_mongodump_filename.txt -w data
 
 	#_______________________________________________________________________
 	#
@@ -98,7 +104,7 @@ rc-restore: init-dirs
 	#
 
 	tuplegen --delimiter % --listfiles=tempdata/selected_mongodump_filename.txt,tempdata/docker_db_volume.txt \
-	| tuple2json --delimiter % --keys=dumpfile,dbname > warp_params.json
+	| tuple2json --delimiter % --keys=dumpfile,dbname > tempdata/restore_params.json
 
 	#_______________________________________________________________________
 	#
@@ -106,7 +112,7 @@ rc-restore: init-dirs
 	# by populating a warp template; add the command to our shell script
 	#_______________________________________________________________________
 
-	cat warp_params.json \
+	cat tempdata/restore_params.json \
 	| warp --py --template-file=template_files/restore_script.tpl -s \
 	>> temp_scripts/rc-restore.sh
 
