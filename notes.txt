@@ -1,0 +1,20 @@
+cd /backups
+docker run -it --rm --link db -v /backups:/backups mongo:3.0 mongodump -h db -o /backups/mongoBACKUP
+tar czf mongoBACKUP.tar.gz mongoBACKUP/
+
+
+
+docker run -it --rm --link db -v /backups:/backups 
+mongo:4.0.9 mongodump -h db -o /backups/mongoBACKUP
+
+
+!!!!
+
+docker ps -a | grep mongo
+
+
+export MONGO_DB_NAME=`docker ps -a | grep mongo | awk '{ print $11 }'`
+
+docker exec $MONGO_DB_NAME sh -c 'mongodump --archive' > {dumpfile}
+
+docker exec -i $MONGO_DB_NAME sh -c 'mongorestore --archive' < {dumpfile}
