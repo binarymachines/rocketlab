@@ -18,3 +18,9 @@ export MONGO_DB_NAME=`docker ps -a | grep mongo | awk '{ print $11 }'`
 docker exec $MONGO_DB_NAME sh -c 'mongodump --archive' > {dumpfile}
 
 docker exec -i $MONGO_DB_NAME sh -c 'mongorestore --archive' < {dumpfile}
+
+tempdata/docker_db_volume.txt
+
+
+
+tuplegen --delimiter % --listfiles=tempdata/selected_mongodump_filename.txt,tempdata/docker_db_volume.txt

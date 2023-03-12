@@ -3,7 +3,7 @@
 
 '''
 Usage:
-    prompt_for_restore_file -o <outfile> [-w <working_directory>] [-x <extension>] 
+    prompt_for_restore_file -o <outfile> -k <key> [-w <workking_directory>] [-x <extension>] 
 
 Options:
     -w --working-dir    search for dumpfiles in this directory
@@ -35,18 +35,14 @@ class SinglePromptCLI(Cmd):
         
         dumpfile_options = []
         extn = self.params['extension']
-
-        working_directory = os.path.join(os.getcwd(), self.params['working_dir'])
-        
-        for fname in os.listdir(working_directory):
-            fullname = os.path.join(working_directory, fname)
-            if os.path.isfile(fullname) and fname.endswith(extn):
+        for path in os.listdir(self.params['working_dir']):
+            if os.path.isfile(path) and path.endswith(extn):
                 dumpfile_options.append({
-                    'value': fname,
-                    'label': fname
+                    'value': path,
+                    'label': path
                 }                
                 )
-        
+
         mp = cli.MenuPrompt('select a dumpfile', dumpfile_options)
         self.value = mp.show()
         
@@ -74,13 +70,21 @@ def main(args):
 
 
     output_filename = os.path.join(os.getcwd(), args['<outfile>'])
-    
+    print(f'output file is {output_filename}')
+
+    key = args['<key>']
+
     with open(output_filename, 'x') as f:
-        record = os.path.join(working_dir, selected_file)
-        f.write(record)
+        record = {
+            key: os.path.join(working_dir, selected_file)
+        }
+        f.write(json.dumps(record))
         f.write('\n')
+        
+    
 
-
+    
+    
 if __name__ == '__main__':
     args = docopt.docopt(__doc__)
     main(args)

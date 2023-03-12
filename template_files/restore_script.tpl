@@ -1,1 +1,1 @@
-docker exec -i $MONGO_DB_NAME sh -c 'mongorestore --archive' < {dumpfile}
+docker exec -i {dbname} sh -c 'mongorestore --archive' < {dumpfile}
