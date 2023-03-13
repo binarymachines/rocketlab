@@ -1,0 +1,58 @@
+#!/usr/bin/env python
+
+
+'''
+Usage:
+    prompt (-j | -t) -o <filename> --cli-prompt <module.class> <prompt_func> --params=<name:value>...
+
+Options:            
+    -j --json
+    -t --text
+'''
+
+import os,sys
+import json
+import docopt
+from snap import common
+from snap import cli_tools as cli
+from cmd import Cmd
+from mercury.uisequences import *
+from mercury.configtargets import *
+from mercury.utils import tab, clear
+from mercury.utils import open_in_place, read_stdin, parse_cli_params
+
+
+
+def main(args):
+
+    sys.path.append(os.getcwd())
+
+    class_designator = args['<module.class>']
+    cdtokens = class_designator.split('.')
+    if len(cdtokens) != 2:
+        print(f'The --cli-prompt argument must be in the form <module.class>.')
+        return(1)
+
+    module_name = cdtokens[0]
+    classname = cdtokens[1]
+
+    cli_prompt_class = common.load_class(classname, module_name)
+
+    prompt_params = parse_cli_params(args['--params'])
+    prompt_funcname = args['<prompt_func>']
+
+    clear()
+    prompt_cli = cli_prompt_class(**prompt_params)
+    prompt_function = getattr(prompt_cli, prompt_funcname)
+
+    output_data = prompt_function()
+
+    outfile = args['<filename>']
+    with open(outfile, 'x') as f:
+        f.write(output_data)
+        f.write('\n')
+
+
+if __name__ == '__main__':
+    args = docopt.docopt(__doc__)
+    main(args)
